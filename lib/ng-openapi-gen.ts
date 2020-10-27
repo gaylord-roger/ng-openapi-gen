@@ -167,6 +167,7 @@ export class NgOpenApiGen {
             id = methodName(`${opPath}.${method}`);
             console.warn(`Operation '${opPath}.${method}' didn't specify an 'operationId'. Assuming '${id}'.`);
           }
+          /*
           if (this.operations.has(id)) {
             // Duplicated id. Add a suffix
             let suffix = 0;
@@ -176,6 +177,26 @@ export class NgOpenApiGen {
             }
             console.warn(`Duplicate operation id '${id}'. Assuming id ${newId} for operation '${opPath}.${method}'.`);
             id = newId;
+          }*/
+          const opTags = methodSpec.tags || [];
+          if (opTags.length === 0) {
+            opTags.push(defaultTag);
+          }
+
+          for (const tag of opTags) {
+            const operations = operationsByTag.get(tag);
+            if (operations) {
+              if (operations.filter(item => item.id === id).length > 0) {
+                // Duplicated id. Add a suffix
+                let suffix = 0;
+                let newId: string = id;
+                while (operations.filter(item => item.id === newId).length > 0) {
+                  newId = `${id}_${++suffix}`;
+                }
+                console.warn(`Duplicate operation id '${id}'. Assuming id ${newId} for operation '${opPath}.${method}'.`);
+                id = newId;
+              }
+            }
           }
 
           const operation = new Operation(this.openApi, opPath, pathSpec, method, id, methodSpec, this.options);
